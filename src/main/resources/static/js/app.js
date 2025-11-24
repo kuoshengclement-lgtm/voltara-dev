@@ -131,18 +131,30 @@ async function handleLogin(e) {
 
     try {
         // For now, just store locally. In production, implement proper JWT auth
-        const response = await fetch(`${API_BASE}/users/signIn`);
-        const users = await response.json();
-        const user = users.find(u => u.email === email);
+       const response = await fetch(`${API_BASE}/users/signIn`, {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ email, password })
+       });
+       if (!response.ok) {
+            const err = await response.json().catch(() => ({ error: response.statusText }));
+            showAlert(err.error || 'Invalid credentials', 'danger');
+            return;
+       }
+
+       const data = await response.json();
         
-        if (user) {
+       if (user) {
             currentUser = user;
             showAlert('Login successful!', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+            const modalEl = document.getElementById('loginModal');
+            const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            // bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+            modal.hide();
             updateUI();
-        } else {
+       } else {
             showAlert('Invalid credentials', 'danger');
-        }
+       }
     } catch (error) {
         console.error('Login error:', error);
         showAlert('Login failed', 'danger');

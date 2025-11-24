@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### VS Code ###
+application.properties
+UserDetailsImpl.java
+JwtUtils.java
+SecurityConfig.java
+AuthTokenFilter.java
+AuthEntryPointJwt.java

@@ -6,10 +6,13 @@ import net.microcontroller.backend.model.User;
 import net.microcontroller.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -18,8 +21,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserService {
 
+	@Autowired
 	private UserRepository userRepository;
+
+	@Autowired
 	private PasswordEncoder passwordEncoder;
+
+	@Autowired
 	private ModelMapper modelMapper;
 
 	@Transactional
@@ -27,12 +35,9 @@ public class UserService {
 		if (userRepository.existsByEmail(email)) {
 			throw new RuntimeException("User with email " + email + " already exists");
 		}
+		List<SimpleGrantedAuthority> userAuthorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
 
-		User user = User.builder()
-				.email(email)
-				.password(passwordEncoder.encode(password))
-				.role(role)
-				.build();
+		User user = new User(email, passwordEncoder.encode(password), userAuthorities);
 
 		User savedUser = userRepository.save(user);
 		return modelMapper.map(savedUser, UserDTO.class);
