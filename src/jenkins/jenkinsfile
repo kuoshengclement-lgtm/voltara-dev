@@ -52,19 +52,19 @@ pipeline {
             mvn -f pom.xml clean package
             mvn clean install
             '''
-
+        }
       }
       stage('Deploy in Staging Environment') {
-      steps {
-          // Deploy application to a target environment (e.g., staging)
-          sh '''
-          mvn compile jib:build
-          '''
-          timeout(time:5, unit:'DAYS'){
-               input message:'Approve PRODUCTION Deployment?'
+          steps {
+              // Deploy application to a target environment (e.g., staging)
+              sh '''
+              mvn compile jib:build
+              '''
+              timeout(time:5, unit:'DAYS'){
+                   input message:'Approve PRODUCTION Deployment?'
+              }
+              build job: 'Deploy_Application_Staging_Env'
           }
-          build job: 'Deploy_Application_Staging_Env'
-      }
       }
     }
 }
