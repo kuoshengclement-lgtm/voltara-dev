@@ -1,0 +1,70 @@
+pipeline {
+    agent any
+    
+    environment {
+      VERSION = '0.1.0'
+      RELEASE_VERSION = 'R.2'
+    }
+
+    stages {
+      stage('Audit tools') {
+        steps {
+          sh '''
+              git version
+              java -version
+              mvn -version
+          '''
+        }
+      }
+      stage('Checkout') {
+          steps {
+              script {
+                  // Clone the Git repository's master branch
+                  def gitRepoUrl = 'https://github.com/kuoshengclement-lgtm/voltara-dev.git'
+
+                  checkout([$class: 'GitSCM',
+                      branches: [[name: '*/master']],
+                      userRemoteConfigs: [[url: gitRepoUrl]],
+                      extensions: [[$class: 'CleanBeforeCheckout'], [$class: 'CloneOption', noTags: false, shallow: true, depth: 1]]
+                  ])
+              }
+          }
+      }
+
+      stage('Unit Test') {
+        steps {
+        sh '''
+          echo "Executing Unit Tests..."
+          mvn test
+        '''
+
+        }
+      }
+
+      stage('Build') {
+        steps {
+          echo "Building version: ${VERSION} with suffix: ${RELEASE_VERSION}"
+          echo 'Mention your Application Build Code here!!!'
+
+          sh '''
+            mvn versions:set -DnewVersion="${VERSION}"-SNAPSHOT
+            mvn versions:update-child-modules
+            mvn -f pom.xml clean package
+            mvn clean install
+            '''
+
+      }
+      stage('Deploy in Staging Environment') {
+      steps {
+          // Deploy application to a target environment (e.g., staging)
+          sh '''
+          mvn compile jib:build
+          '''
+          timeout(time:5, unit:'DAYS'){
+               input message:'Approve PRODUCTION Deployment?'
+          }
+          build job: 'Deploy_Application_Staging_Env'
+      }
+      }
+    }
+}
